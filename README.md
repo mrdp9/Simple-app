@@ -1,238 +1,86 @@
-# Microservices Architecture Demo (React + Node.js + FastAPI)
+# **Mic**roservices **Dem**o: **Rea**ct + **Nod**e.js + **Fas**tAPI
 
-This project demonstrates how **microservices architecture** works in contrast to a monolithic setup.
-You’ll see how splitting an app into independent services helps prevent total system failure — and how Docker makes it easy to run them together locally.
+## **Wh**at is **th**is?
 
----
+This **pro**ject is a **sma**ll demo of an app **spl**it into **thr**ee services.
 
-## Overview
+- **Fro**ntend: a **Rea**ct website, served by **Ngi**nx.
+- **Aut**h service: a **Nod**e.js API.
+- **Dat**a service: a **Pyt**hon FastAPI.
 
-In a **monolithic app**, all features (frontend, authentication, business logic, database) are tightly coupled into one unit.
-If one part fails (say, the backend), the entire system can go down.
+The **ser**vices **com**municate over a **net**work. The **dat**a service **ret**urns sample names; it does **not** use a database.
 
-**Microservices architecture** solves this by breaking an application into smaller, independent services that:
+## **Pro**ject **str**ucture
 
-* Run in isolation
-* Communicate via APIs
-* Can fail without crashing the entire system
-* Are easier to scale and maintain
-
-In this demo:
-
-* The **React app** is the frontend interface
-* The **Node.js (Express)** service handles authentication
-* The **Python (FastAPI)** service provides business logic/data
-
----
-
-## Project Structure
-
-```
-microservices-demo/
-├── frontend/        # React app (port 3000)
-├── auth-service/    # Node.js auth API (port 4000)
-├── backend-service/ # FastAPI backend (port 8000)
-└── docker-compose.yml
+```text
+Simple-app/
+├── frontend/       # React website and Nginx config
+├── auth-service/   # Node.js API
+├── data-service/   # FastAPI
+├── docker-compose.yml
+└── terraform/      # AWS infrastructure examples
 ```
 
----
+## **How** a **req**uest **flo**ws
 
-## ⚙️ 1. Frontend (React)
+1. Your **bro**wser **loa**ds the website from the frontend.
+2. The frontend **req**uests data from `/api/auth/` and `/api/data/`.
+3. **Ngi**nx **for**wards those paths to the auth and data services.
 
-**Purpose:** User interface that communicates with the Node.js and FastAPI services.
+With **Kubernetes**, the frontend can reach the APIs through their **int**ernal Service names. Usually, only the website needs to be **exp**osed to users.
 
-**Setup:**
+## **Run** with **Doc**ker **Com**pose
+
+From the project directory:
 
 ```bash
-cd frontend
-npm install
-npm start
+docker compose up --build
 ```
 
-**Environment Variables:**
+Open [http://localhost:3000](http://localhost:3000) to view the website.
 
-```
-REACT_APP_AUTH_URL=http://localhost:4000
-REACT_APP_BACKEND_URL=http://localhost:8000
-```
+To **che**ck the services:
 
-This runs the frontend on **[http://localhost:3000](http://localhost:3000)**.
+- Auth: [http://localhost:4000/health](http://localhost:4000/health)
+- Data: [http://localhost:8000/health](http://localhost:8000/health)
 
----
-
-## 🔑 2. Auth Service (Node.js + Express)
-
-**Purpose:** Usually Handles authentication logic — registration, login, JWT token generation.
-
-**Our Demo:** Just shows some Auth Service text.
-
-**Setup:**
+To **vie**w running containers and logs:
 
 ```bash
-cd auth-service
-npm install
-node index.js
+docker compose ps
+docker compose logs
 ```
 
-Runs on **[http://localhost:4000](http://localhost:4000)**.
-
----
-
-## 🐍 3. Backend Service (Python + FastAPI)
-
-**Purpose:** Simulates business or data-processing logic.
-
-**Our Demo:** Shows names of Avengers
-
-**Setup:**
+To **sto**p the app:
 
 ```bash
-cd backend-service
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+docker compose down
 ```
 
-**Test Endpoint:**
+## **Whe**re to **loo**k
 
-```bash
-GET /health
-```
+- **App code** shows routes, ports, and how services communicate.
+- **Dockerfiles** show how each service is built and started.
+- `package.json` and `requirements.txt` list application dependencies.
+- `frontend/nginx.conf` shows how API requests are routed.
+- `docker-compose.yml` shows how the containers run together locally.
 
-Runs on **[http://localhost:8000](http://localhost:8000)**.
+For **Kubernetes**, focus first on **Deployments** (run app replicas), **Services** (stable networking), and **Ingress** (HTTP entry into the cluster). Start by understanding the app's ports and request flow before writing manifests.
 
----
+## **Impor**tant **limi**tations
 
-## 🧪 4. Local Testing
+- The auth service is a **demo**, not real authentication.
+- The data service returns **hard-coded** sample data.
+- This project has **no database** or persistent application data.
+- Docker Compose is for **local** orchestration; Kubernetes deployment is a separate learning step.
 
-Run each service manually on its own port.
+## **Next** steps
 
-1. Visit the frontend ([http://localhost:3000](http://localhost:3000)) — it should connect to both APIs.
-2. Try stopping one service (e.g., FastAPI backend).
+- Deploy the three services to a local Kubernetes cluster.
+- Keep API Services internal; choose how users will access the website.
+- Practice scaling a Deployment and observing what happens when a Pod fails.
+- Later, explore the Terraform and GitHub Actions folders.
 
-   * The React app throws an error page covering the content undernneath
-3. Stop the auth service next.
+## **Lic**ense
 
-   * React app throes an error page as well and disrupts the user's experience
-
-✅ **Result:** You’ve just simulated *a failure* — disabling one service has affected the entire webapp.
-
----
-
-## 🐳 5. Containerization with Docker
-
-Each service includes its own **Dockerfile**.
-
-**Example build commands:**
-
-```bash
-docker build -t react-frontend ./frontend
-docker build -t node-auth ./auth-service
-docker build -t python-backend ./backend-service
-```
-
-**Run manually:**
-
-```bash
-docker run -d -p 3000:80 react-frontend # 80 because that's the usual port for HTTP
-docker run -d -p 4000:4000 node-auth
-docker run -d -p 8000:8000 python-backend
-```
-
-**Test failure scenario again:**
-Stop one container (`docker stop python-backend`) and see that the others remain functional.
-
-✅ ***Result*** : You’ve just simulated *partial failure* — something that would crash a monolithic app, but in a microservice setup, other services stay alive.
-
----
-
-## 🧩 6. Simplified Orchestration (Docker Compose)
-
-The `docker-compose.yml` makes it easier to manage all containers.
-
-**Example:**
-
-```yaml
-version: '3.8'
-services:
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:80" # set to open on port 80 - usual port for HTTP
-    depends_on:
-      - auth
-      - backend
-
-  auth:
-    build: ./auth-service
-    ports:
-      - "4000:4000"
-
-  backend:
-    build: ./backend-service
-    ports:
-      - "8000:8000"
-```
-
-**Run all at once:**
-
-```bash
-docker compose up --build # first time build // rebuild images before starting
-```
-
-**Other useful commands**
-
-```bash
-docker compose up -d # run in detached mode (run in background)
-```
-
-```bash
-docker compose down # stops and removes containers, networks, and default volumes creeated by Compose
-```
-
-```bash
-docker compose ps # view running services
-```
-
-```bash
-docker compose logs # view logs of conntainers managed by docker-compose
-```
-
----
-
-## 🔍 7. Architecture Diagram
-
-```
- ┌────────────┐        ┌───────────────┐        ┌─────────────┐
- │  Frontend  │ <----> │  Auth Service │ <----> │  Backend    │
- │ (React)    │        │ (Node.js)     │        │ (FastAPI)   │
- └────────────┘        └───────────────┘        └─────────────┘
-        │
-        └── Docker Network (local)
-```
-
-Each service runs independently in its own container — communicating over a shared Docker network.
-
----
-
-## 🧠 8. Key Learnings
-
-* Each microservice can be built, deployed, and tested independently.
-* A crash in one service does **not** affect others.
-* Docker enables isolated environments for each service.
-* Docker Compose simplifies local multi-container orchestration.
-
----
-
-## 🛠️ 9. Next Steps
-
-In the next stage, we’ll:
-
-* Deploy these microservices on **AWS ECS Fargate** using **Terraform**
-* Implement a **CI/CD pipeline** with **GitHub Actions**
-* Add **Prometheus & Grafana** for observability
-
----
-
-## 📜 License
-
-This project is open-source and available under the [MIT License](LICENSE).
+This project is available under the [MIT License](LICENSE).
