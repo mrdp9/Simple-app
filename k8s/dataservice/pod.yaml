@@ -9,17 +9,22 @@ spec:
   - name: dataservice
     image: dataservice:v1
     imagePullPolicy: Never
-
     resources:
       limits:
         memory: "128Mi"
         cpu: "500m"
     ports:
     - containerPort: 8000
+  
     livenessProbe:
       httpGet:
         path: /health
         port: 8000
-      initialDelaySeconds: 3
-      periodSeconds: 3
-    
+      initialDelaySeconds: 5
+      periodSeconds: 5
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 8000
+      initialDelaySeconds: 5
+      periodSeconds: 5
