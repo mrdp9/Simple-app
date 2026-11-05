@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
   - name: dataservice
-    image: dataservice:v1
+    image: dataservice:v2
     imagePullPolicy: Never
     resources:
       limits:
@@ -15,7 +15,7 @@ spec:
         cpu: "500m"
     ports:
     - containerPort: 8000
-  
+
     livenessProbe:
       httpGet:
         path: /health
